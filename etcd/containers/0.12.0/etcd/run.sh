@@ -80,7 +80,7 @@ rolling_backup() {
     if [ "$EMBEDDED_BACKUPS" == "true" ]; then
         BACKUP_PERIOD=${BACKUP_PERIOD:-5m}
         BACKUP_RETENTION=${BACKUP_RETENTION:-24h}
-
+        
         giddyup leader elect --proxy-tcp-port=2160 \
             etcdwrapper rolling-backup \
                 --period=$BACKUP_PERIOD \

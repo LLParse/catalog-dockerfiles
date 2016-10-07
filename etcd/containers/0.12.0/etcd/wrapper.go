@@ -12,6 +12,8 @@ import (
   "time"
   "strings"
 
+  "golang.org/x/net/context"
+  "github.com/coreos/etcd/client"
   log "github.com/Sirupsen/logrus"
   "github.com/urfave/cli"
 )
@@ -132,9 +134,26 @@ func ProxyAction(c *cli.Context) error {
 func RollingBackupAction(c *cli.Context) error {
   SetLoggingLevel(c.Bool("debug"))
 
+  for {
+    if err := HealthCheck("tcp://127.0.0.1:2379", 5 * time.Second); err != nil {
+      time.Sleep(1 * time.Second)
+    } else {
+      break
+    }
+  }
+
   backupPeriod := c.Duration("period")
   retentionPeriod := c.Duration("retention")
   index := c.Int("index")
+
+  etcd := client.New(&client.Config{
+    Endpoints: []string{"http://127.0.0.1:2379"}
+  })
+
+  etcd.Set(context.Background, "/com.rancher/etcd-backup/lock", string(index), &client.SetOptions{
+    PrevExist: client.PrevNoExist,
+    TTL: backupPeriod,
+  })
 
   log.WithFields(log.Fields{
     "period": backupPeriod,
