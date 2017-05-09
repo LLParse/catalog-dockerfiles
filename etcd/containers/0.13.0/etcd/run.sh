@@ -319,6 +319,12 @@ node() {
 
     # if we have a data volume and it was served by a container with same IP
     elif [ -d "$ETCD_DATA_DIR/member" ] && [ "$(cat $ETCD_DATA_DIR/ip)" == "$IP" ]; then
+
+        # if the migration flag is set, upgrade to v3
+        if [ "$ETCD_MIGRATE" == "v3" ]; then
+            ETCDCTL_API=3 etcdctl migrate --data-dir=$ETCD_DATA_DIR
+        fi
+
         restart_node
 
     # if this member is already registered to the cluster but no data volume, we are recovering
