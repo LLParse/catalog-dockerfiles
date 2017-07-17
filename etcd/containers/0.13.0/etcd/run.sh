@@ -22,6 +22,7 @@ DATA_DIR=/pdata
 DR_FLAG=$DATA_DIR/DR
 export ETCD_DATA_DIR=$DATA_DIR/data.current
 export ETCDCTL_ENDPOINT=http://etcd.${STACK_NAME}:2379
+export ETCDCTL_API=2
 
 # member name should be dashed-IP (piggyback off of retain_ip functionality)
 NAME=$(echo $IP | tr '.' '-')
@@ -164,7 +165,10 @@ runtime_node() {
         ctx_index=$(wget -q -O - ${META_URL}/self/service/containers/${container}/create_index)
         primary_ip=$(wget -q -O - ${META_URL}/self/service/containers/${container}/primary_ip)
         if [ "${ctx_index}" -lt "${CREATE_INDEX}" ]; then
-            giddyup probe http://${primary_ip}:2379/health --loop --min 1s --max 15s --backoff 1.2
+            timeout -t60 giddyup probe http://${primary_ip}:2379/health --loop --min 1s --max 15s --backoff 1.2
+            if [ "$?" != "0" ]; then
+                exit 1
+            fi
         fi
     done
 
